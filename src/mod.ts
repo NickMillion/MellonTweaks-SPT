@@ -52,7 +52,22 @@ class Mod implements IPreAkiLoadMod, IPostAkiLoadMod, IPostDBLoadMod {
             try {
               const profile = profiles.getFullProfile(sessionID);
               this.postToDiscord(
-                `Player ${profile.characters.pmc.Info.Nickname} has logged in!`,
+                `${profile.characters.pmc.Info.Nickname} has logged in`,
+                logger
+              );
+            } catch (error) {
+              logger.error(error.message);
+            }
+            return output;
+          },
+        },
+        {
+          url: "/client/match/offline/end",
+          action: (url: any, info: any, sessionID: any, output: any) => {
+            try {
+              const profile = profiles.getFullProfile(sessionID);
+              this.postToDiscord(
+                `${profile.characters.pmc.Info.Nickname}'s last raid has ended`,
                 logger
               );
             } catch (error) {
@@ -67,7 +82,22 @@ class Mod implements IPreAkiLoadMod, IPostAkiLoadMod, IPostDBLoadMod {
             try {
               const profile = profiles.getFullProfile(sessionID);
               this.postToDiscord(
-                `Player ${profile.characters.pmc.Info.Nickname} has started a coop raid!`,
+                `${profile.characters.pmc.Info.Nickname} has started a coop raid`,
+                logger
+              );
+            } catch (error) {
+              logger.error(error.message);
+            }
+            return output;
+          },
+        },
+        {
+          url: "/client/game/logout",
+          action: (url: any, info: any, sessionID: any, output: any) => {
+            try {
+              const profile = profiles.getFullProfile(sessionID);
+              this.postToDiscord(
+                `${profile.characters.pmc.Info.Nickname} has logged out`,
                 logger
               );
             } catch (error) {
@@ -693,13 +723,13 @@ class Mod implements IPreAkiLoadMod, IPostAkiLoadMod, IPostDBLoadMod {
 
     // Just a flat 3x multiplier for all experience, no weird fresh points or fatigue
     if (config.standardizeExperience) {
-      globals.SkillsSettings.SkillProgressRate = 3;
-      globals.SkillsSettings.WeaponSkillProgressRate = 3;
-      globals.SkillMinEffectiveness = 3;
-      globals.SkillFatiguePerPoint = 99;
+      globals.SkillsSettings.SkillProgressRate = 2;
+      globals.SkillsSettings.WeaponSkillProgressRate = 2;
+      globals.SkillMinEffectiveness = 0.1;
+      globals.SkillFatiguePerPoint = 1;
       globals.SkillFreshEffectiveness = 1;
       globals.SkillFreshPoints = 1;
-      globals.SkillPointsBeforeFatigue = 1;
+      globals.SkillPointsBeforeFatigue = 9999;
       globals.SkillFatigueReset = 9999;
       this.ezLog(logger, "Nick - Standardized experience!");
     }
