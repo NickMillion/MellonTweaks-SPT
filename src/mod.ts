@@ -52,9 +52,7 @@ class Mod implements IPreAkiLoadMod, IPostAkiLoadMod, IPostDBLoadMod {
             try {
               const profile = profiles.getFullProfile(sessionID);
               this.postToDiscord(
-                `Player ${
-                  profile.pmc?.Info?.Nickname ?? "BROKEN"
-                } has loaded into ${profile?.inraid?.location ?? "BROKEN"}!`,
+                `Player ${profile.characters.pmc.Info.Nickname} has logged in!`,
                 logger
               );
             } catch (error) {
@@ -64,14 +62,12 @@ class Mod implements IPreAkiLoadMod, IPostAkiLoadMod, IPostDBLoadMod {
           },
         },
         {
-          url: "/client/items", //After load, gets player and scav level
+          url: "/coop/server/create",
           action: (url: any, info: any, sessionID: any, output: any) => {
             try {
               const profile = profiles.getFullProfile(sessionID);
               this.postToDiscord(
-                `Player ${
-                  profile.pmc?.Info?.Nickname ?? "BROKEN"
-                } has logged on!`,
+                `Player ${profile.characters.pmc.Info.Nickname} has started a coop raid!`,
                 logger
               );
             } catch (error) {
