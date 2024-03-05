@@ -13,7 +13,6 @@ import { StaticRouterModService } from "@spt-aki/services/mod/staticRouter/Stati
 import { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
 
 import config from "../config.json";
-import configPrivate from "../configPrivate.json";
 
 const debuffCameraEffects = ["QuantumTunnelling", "Contusion"];
 const discordInfo = {
@@ -26,16 +25,24 @@ class Mod implements IPreAkiLoadMod, IPostAkiLoadMod, IPostDBLoadMod {
   public preAkiLoad(container: DependencyContainer): void {
     const logger = container.resolve<ILogger>("WinstonLogger");
     // Discord bot stuff
-    discordInfo.token = configPrivate.DISCORD_TOKEN || "";
-    discordInfo.channel = configPrivate.CHANNEL_ID || "";
-    if (discordInfo.token !== "" && discordInfo.channel !== "") {
-      this.ezLog(logger, "Discord bot enabled!");
-    } else {
+    try {
+      const configPrivate = require("../configPrivate.json");
+      discordInfo.token = configPrivate.DISCORD_TOKEN || "";
+      discordInfo.channel = configPrivate.CHANNEL_ID || "";
+      if (discordInfo.token !== "" && discordInfo.channel !== "") {
+        this.ezLog(logger, "Discord bot enabled!");
+      } else {
+        this.ezLog(
+          logger,
+          "No Discord bot ID or channel ID, Discord bot is disabled!"
+        );
+        return;
+      }
+    } catch (error) {
       this.ezLog(
         logger,
-        "No Discord bot ID or channel ID, Discord bot is disabled!"
+        `Couldn't find the private config, Discord bot is disabled! If you want to enable it, create a configPrivate.json file with the DISCORD_TOKEN and CHANNEL_ID fields`
       );
-      return;
     }
 
     const router = container.resolve<StaticRouterModService>(
