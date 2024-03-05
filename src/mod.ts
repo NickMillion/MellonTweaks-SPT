@@ -9,12 +9,82 @@ import { IPostDBLoadMod } from "@spt-aki/models/external/IPostDBLoadMod";
 import { ILogger } from "@spt-aki/models/spt/utils/ILogger";
 import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
 import { ConfigServer } from "@spt-aki/servers/ConfigServer";
+import { StaticRouterModService } from "@spt-aki/services/mod/staticRouter/StaticRouterModService";
+import { ProfileHelper } from "@spt-aki/helpers/ProfileHelper";
 
 import config from "../config.json";
+import configPrivate from "../configPrivate.json";
 
 const debuffCameraEffects = ["QuantumTunnelling", "Contusion"];
+const discordInfo = {
+  token: "",
+  channel: "",
+};
+const urlsToHandle = ["/client/items"];
 
 class Mod implements IPreAkiLoadMod, IPostAkiLoadMod, IPostDBLoadMod {
+  public preAkiLoad(container: DependencyContainer): void {
+    const logger = container.resolve<ILogger>("WinstonLogger");
+    // Discord bot stuff
+    discordInfo.token = configPrivate.DISCORD_TOKEN || "";
+    discordInfo.channel = configPrivate.CHANNEL_ID || "";
+    if (discordInfo.token !== "" && discordInfo.channel !== "") {
+      this.ezLog(logger, "Discord bot enabled!");
+    } else {
+      this.ezLog(
+        logger,
+        "No Discord bot ID or channel ID, Discord bot is disabled!"
+      );
+      return;
+    }
+
+    const router = container.resolve<StaticRouterModService>(
+      "StaticRouterModService"
+    );
+    const profiles = container.resolve<ProfileHelper>("ProfileHelper");
+
+    router.registerStaticRouter(
+      "MellonTweaks",
+      [
+        {
+          url: "/client/game/start",
+          action: (url: any, info: any, sessionID: any, output: any) => {
+            try {
+              const profile = profiles.getFullProfile(sessionID);
+              this.postToDiscord(
+                `Player ${
+                  profile.pmc?.Info?.Nickname ?? "BROKEN"
+                } has loaded into ${profile?.inraid?.location ?? "BROKEN"}!`,
+                logger
+              );
+            } catch (error) {
+              logger.error(error.message);
+            }
+            return output;
+          },
+        },
+        {
+          url: "/client/items", //After load, gets player and scav level
+          action: (url: any, info: any, sessionID: any, output: any) => {
+            try {
+              const profile = profiles.getFullProfile(sessionID);
+              this.postToDiscord(
+                `Player ${
+                  profile.pmc?.Info?.Nickname ?? "BROKEN"
+                } has logged on!`,
+                logger
+              );
+            } catch (error) {
+              logger.error(error.message);
+            }
+            return output;
+          },
+        },
+      ],
+      "aki"
+    );
+  }
+
   public postDBLoad(container: DependencyContainer): void {
     // Database will be loaded, this is the fresh state of the DB so NOTHING from the AKI
     // logic has modified anything yet. This is the DB loaded straight from the JSON files
@@ -637,10 +707,36 @@ class Mod implements IPreAkiLoadMod, IPostAkiLoadMod, IPostDBLoadMod {
       globals.SkillFatigueReset = 9999;
       this.ezLog(logger, "Nick - Standardized experience!");
     }
+
+    this.postToDiscord("The Mellon Farm is online! 🍈", logger);
   }
 
   private ezLog(logger: ILogger, message: string): void {
     logger.log(`MellonTweaks: ${message}`, "white");
+  }
+
+  private postToDiscord(message: string, logger?: ILogger): void {
+    // If the botID is empty, don't do anything
+    if (!discordInfo.token || discordInfo.token == "") {
+      return;
+    }
+    const axios = require("axios");
+    axios
+      .post(
+        `https://discord.com/api/v9/channels/${discordInfo.channel}/messages`,
+        {
+          content: message,
+        },
+        {
+          headers: {
+            Authorization: `Bot ${discordInfo.token}`,
+          },
+        }
+      )
+      .catch((err: any) => {
+        console.log(err);
+      });
+    this.ezLog(logger, `Posted to Discord: ${message}`);
   }
 }
 

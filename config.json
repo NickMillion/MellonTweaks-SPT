@@ -1,5 +1,5 @@
 {
-  "debugPrintChanges": true,
+  "debugPrintChanges": false,
   "sideArmorsArmpits": true,
   "chestArmorsNeck": true,
   "armsArmorsArmpits": true,
