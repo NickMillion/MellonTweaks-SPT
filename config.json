@@ -27,5 +27,9 @@
   "vendorPurchasesFIR": true,
   "improvedInsurance": true,
   "improvedRepair": true,
-  "standardizeExperience": true
+  "standardizeExperience": true,
+  "skipDiscordBot": true,
+  "baseRecoilMult": 0.5,
+  "aimPunchMult": 0.5,
+  "hipFireAccuracyMult": 1.5
 }

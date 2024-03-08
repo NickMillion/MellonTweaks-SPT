@@ -24,6 +24,10 @@ const urlsToHandle = ["/client/items"];
 class Mod implements IPreAkiLoadMod, IPostAkiLoadMod, IPostDBLoadMod {
   public preAkiLoad(container: DependencyContainer): void {
     const logger = container.resolve<ILogger>("WinstonLogger");
+    if (config.skipDiscordBot) {
+      this.ezLog(logger, "Skipping Discord bot stuff");
+      return;
+    }
     // Discord bot stuff
     try {
       const configPrivate = require("../configPrivate.json");
@@ -559,6 +563,34 @@ class Mod implements IPreAkiLoadMod, IPostAkiLoadMod, IPostDBLoadMod {
         }
       }
 
+      if (config.hipFireAccuracyMult && config.hipFireAccuracyMult !== 1) {
+        // item._props.HipAccuracyRestorationDelay, divided by mult
+        // item._props.HipInnaccuracyGain, divided by mult
+        if (item._props.HipAccuracyRestorationDelay) {
+          item._props.HipAccuracyRestorationDelay =
+            item._props.HipAccuracyRestorationDelay /
+            config.hipFireAccuracyMult;
+          updated = true;
+          if (config.debugPrintChanges) {
+            this.ezLog(
+              logger,
+              `Nick - Updated hip fire accuracy restoration delay for ${item._id} / ${item._name} / ${item._props.name}! Now: ${item._props.HipAccuracyRestorationDelay}`
+            );
+          }
+        }
+        if (item._props.HipInnaccuracyGain) {
+          item._props.HipInnaccuracyGain =
+            item._props.HipInnaccuracyGain / config.hipFireAccuracyMult;
+          updated = true;
+          if (config.debugPrintChanges) {
+            this.ezLog(
+              logger,
+              `Nick - Updated hip fire inaccuracy gain for ${item._id} / ${item._name} / ${item._props.name}! Now: ${item._props.HipInnaccuracyGain}`
+            );
+          }
+        }
+      }
+
       if (updated || helmetUpdated) {
         updatedItems++;
       }
@@ -739,6 +771,34 @@ class Mod implements IPreAkiLoadMod, IPostAkiLoadMod, IPostDBLoadMod {
       globals.SkillPointsBeforeFatigue = 9999;
       globals.SkillFatigueReset = 9999;
       this.ezLog(logger, "Nick - Standardized experience!");
+    }
+
+    // Base recoil mult
+    if (config.baseRecoilMult && config.baseRecoilMult !== 1) {
+      const oldHoriz = globals.Aiming.RecoilBackBonus;
+      const oldVert = globals.Aiming.RecoilVertBonus;
+
+      globals.Aiming.RecoilBackBonus = Math.floor(
+        oldHoriz * config.baseRecoilMult
+      );
+      globals.Aiming.RecoilVertBonus = Math.floor(
+        oldVert * config.baseRecoilMult
+      );
+      this.ezLog(
+        logger,
+        `Nick - Updated base recoil! New values: Horiz ${globals.Aiming.RecoilBackBonus}, Vert ${globals.Aiming.RecoilVertBonus}; old values: Horiz ${oldHoriz}, Vert ${oldVert}`
+      );
+    }
+
+    // Aim punch mult
+    if (config.aimPunchMult && config.aimPunchMult !== 1) {
+      globals.AimPunchMagnitude = Math.floor(
+        globals.AimPunchMagnitude * config.aimPunchMult
+      );
+      this.ezLog(
+        logger,
+        `Nick - Updated aim punch! New value: ${globals.AimPunchMagnitude}`
+      );
     }
 
     this.postToDiscord("The Mellon Farm is online! 🍈", logger);
